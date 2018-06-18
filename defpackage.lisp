@@ -1,7 +1,7 @@
 (defpackage :unix-streams
-  (:use cffi
-        cl
-        trivial-gray-streams)
+  (:use :cffi
+        :cl
+        :trivial-gray-streams)
   (:export make-unix-io-stream
            unix-close
            unix-input-stream
@@ -10,25 +10,42 @@
            with-file-descriptor-as-ostream))
 
 (defpackage :utils
-  (:use cffi
-        cl
-        osicat)
-  (:export environment-simple-list
+  (:use :cffi
+        :cl
+        :osicat)
+  (:export check-string-list
+           environment-simple-list
            free-array-strings
            string-as-symbol
            string-list-to-array))
 
 (defpackage :clexec
-  (:use cffi
-        cl
-        osicat
-        split-sequence
-        unix-streams
-        utils)
+  (:use :cffi
+        :cl
+        :osicat
+        :split-sequence
+        :unix-streams
+        :utils)
   (:export childp
            execute-program
            lisp-execve
+           make-dup-handle
            parentp
+           pipe
            search-for-program
-           unix-fork))
+           to
+           unix-fork
+           with-programs))
+
+(defpackage :clsh-user
+  (:use :cl
+        :clsh-addons
+        :clexec
+        :osicat))
+  
    
+(defpackage :clsh-addons
+  (:use :cl
+        :osicat
+        :utils)
+  (:export enable-var-reader))

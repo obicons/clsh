@@ -26,14 +26,8 @@
   (loop for (k . v) in (environment)
         collecting (concatenate 'string k "=" v)))
 
-(let ((readtable (copy-readtable)))
-  (set-macro-character #\$
-                       #'(lambda (stream char)
-                           (declare (ignore char))
-                           `(environment-variable
-                             ,(let ((*readtable*
-                                      (copy-readtable readtable)))
-                                (setf (readtable-case *readtable*)
-                                      :preserve)
-                                (SYMBOL-NAME (READ STREAM)))))))
+(defun check-string-list (string-list)
+  (check-type string-list list)
+  (dolist (x string-list)
+    (check-type x string)))
 

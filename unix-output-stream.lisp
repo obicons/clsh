@@ -1,4 +1,4 @@
-(in-package :unix-output-stream)
+(in-package :unix-streams)
 
 (defclass unix-output-stream (fundamental-character-output-stream)
   ((file-descriptor :initarg :file-descriptor

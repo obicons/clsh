@@ -114,6 +114,7 @@
                                arguments)
                         `(multiple-value-bind (,read-end-var ,write-end-var)
                              (lisp-pipe)
+                           (check-string-list arguments)
                            (execute-program ,program
                                             :arguments arguments
                                             :environment
@@ -128,17 +129,34 @@
                                           :file-descriptor ,read-end-var))))
          ,@body))))
 
-(defun to (destination-stream source-stream)
-  "Directs the output of stream-b to stream-a"
+(defun to (destination-stream source-stream &optional (close-on-eof t))
+  "Directs the output of stream-b to stream-a, closing source-stream
+   on end of file when close-on-eof is enabled (default)."
   (loop for line = (read-line source-stream nil)
         while line
-        do (format destination-stream "~a~%" line)))
+        do (format destination-stream "~a~%" line)
+        finally
+        (when close-on-eof
+          (unix-close (unix-stream-file-descriptor source-stream)))))
 
-;;; TODO - IO redirection macro character for to, TO should be able to close
+(defmacro pipe-helper (previous-form-result &rest forms)
+  (cond ((null forms) previous-form-result)
+        ((consp (car forms))
+         `(pipe-helper ,(append (list (caar forms)
+                                      :arguments (list 'quote (cdar forms)))
+                                (list :stdin previous-form-result))
+                       ,@(cdr forms)))
+        ((atom (car forms))
+         `(pipe-helper ,(append (list (car forms))
+                                (list :stdin previous-form-result))
+                       ,@(cdr forms)))))
 
-(defparameter ls-output-stream
-  (with-programs ("cat" "ls")
-    (to *standard-output* (cat :stdin (ls)))))
-
-(with-programs ("echo" "cat")
-  (to *standard-output* (cat :stdin (echo :arguments (list $PATH)))))
+(defmacro pipe (&rest forms)
+  "Pipes stdout of the first form to stdin of the next form.
+   The first form can be either an atom or a function-call."
+  (cond ((consp (car forms))
+         `(pipe-helper ,(list (caar forms)
+                              :arguments (list 'quote (cdar forms)))
+                       ,@(cdr forms)))
+        ((atom (car forms))
+         `(pipe-helper ,(list (car forms)) ,@(cdr forms)))))
