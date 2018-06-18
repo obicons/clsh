@@ -19,4 +19,5 @@
   :components ((:file "defpackage")
                (:file "utils")
                (:file "unix-streams")
-               (:file "clexec")))
+               (:file "clexec")
+               (:file "clsh-addons")))
