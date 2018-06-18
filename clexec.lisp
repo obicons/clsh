@@ -45,7 +45,7 @@
 
 (defun path-search-list ()
   "returns the PATH environment variable string"
-  (getenv "PATH"))
+  (environment-variable "PATH"))
 
 (defun search-for-program-in-directory (program-name directory)
   (check-type directory string)
@@ -82,7 +82,7 @@
   (multiple-value-bind (stdin stdout) (lisp-pipe)
     (execute-program name
                      :arguments arguments
-                     :environment (sb-ext:posix-environ)
+                     :environment (environment-simple-list)
                      :execute-thunk
                      #'(lambda ()
                          (dup2 stdin 0)
@@ -90,3 +90,55 @@
                          (unix-close stdin)
                          (unix-close stdout)))
     (values stdin stdout)))
+
+(defun make-dup-handle (input-fd output-fd)
+  #'(lambda ()
+      (when (not (= input-fd 0))
+        (dup2 input-fd 0)
+        (unix-close input-fd))
+      (when (not (= output-fd 1))
+        (dup2 output-fd 1)
+        (unix-close output-fd))))
+
+(defmacro with-programs (program-list &rest body)
+  (let ((input-stream-var (gensym "input-stream"))
+        (read-end-var (gensym "read-end"))
+        (write-end-var (gensym "write-end")))
+    `(let ((,input-stream-var (make-instance 'unix-input-stream
+                                             :file-descriptor 0)))
+       (labels
+           ,(loop for program in program-list
+                  collecting
+                  (list (string-as-symbol program)
+                        `(&key (stdin ,input-stream-var)
+                               arguments)
+                        `(multiple-value-bind (,read-end-var ,write-end-var)
+                             (lisp-pipe)
+                           (execute-program ,program
+                                            :arguments arguments
+                                            :environment
+                                            (environment-simple-list)
+                                            :execute-thunk
+                                            (make-dup-handle
+                                             (unix-stream-file-descriptor
+                                              stdin)
+                                             ,write-end-var))
+                           (unix-close ,write-end-var)
+                           (make-instance 'unix-input-stream
+                                          :file-descriptor ,read-end-var))))
+         ,@body))))
+
+(defun to (destination-stream source-stream)
+  "Directs the output of stream-b to stream-a"
+  (loop for line = (read-line source-stream nil)
+        while line
+        do (format destination-stream "~a~%" line)))
+
+;;; TODO - IO redirection macro character for to, TO should be able to close
+
+(defparameter ls-output-stream
+  (with-programs ("cat" "ls")
+    (to *standard-output* (cat :stdin (ls)))))
+
+(with-programs ("echo" "cat")
+  (to *standard-output* (cat :stdin (echo :arguments (list $PATH)))))

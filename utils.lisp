@@ -15,16 +15,25 @@
   (dotimes (i length (foreign-free array-strings))
     (foreign-string-free (mem-aref array-strings :pointer i))))
 
-(defun getenv (name &optional default)
-  #+CMU
-  (let ((x (assoc name ext:*environment-list*
-                  :test #'string=)))
-    (if x (cdr x) default))
-  #-CMU
-  (or
-   #+Allegro (sys:getenv name)
-   #+CLISP (ext:getenv name)
-   #+ECL (si:getenv name)
-   #+SBCL (sb-unix::posix-getenv name)
-   #+LISPWORKS (lispworks:environment-variable name)
-   default))
+(defun string-as-symbol (string)
+  "returns string read as a symbol"
+  (check-type string string)
+  (with-input-from-string (stream string)
+    (read stream)))
+
+(defun environment-simple-list ()
+  "returns the environment variable as a simple list"
+  (loop for (k . v) in (environment)
+        collecting (concatenate 'string k "=" v)))
+
+(let ((readtable (copy-readtable)))
+  (set-macro-character #\$
+                       #'(lambda (stream char)
+                           (declare (ignore char))
+                           `(environment-variable
+                             ,(let ((*readtable*
+                                      (copy-readtable readtable)))
+                                (setf (readtable-case *readtable*)
+                                      :preserve)
+                                (SYMBOL-NAME (READ STREAM)))))))
+

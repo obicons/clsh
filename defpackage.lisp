@@ -6,18 +6,22 @@
            unix-close
            unix-input-stream
            unix-output-stream
+           unix-stream-file-descriptor
            with-file-descriptor-as-ostream))
 
 (defpackage :utils
   (:use cffi
-        cl)
-  (:export getenv
+        cl
+        osicat)
+  (:export environment-simple-list
            free-array-strings
+           string-as-symbol
            string-list-to-array))
 
 (defpackage :clexec
   (:use cffi
         cl
+        osicat
         split-sequence
         unix-streams
         utils)
