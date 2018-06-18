@@ -10,6 +10,8 @@ Common Lisp is amazing, but unfortunately sometimes libraries are not present th
 ```lisp
 (in-package :clsh-user)
 
+(enable-var-reader)
+
 ;; outputs "hello world"
 (with-programs ("echo")
   (to *standard-output*
@@ -20,9 +22,22 @@ Common Lisp is amazing, but unfortunately sometimes libraries are not present th
     (to *standard-output*
         (pipe ls
               (grep "bin"))))
+
+;; outputs computer's hostname
+(with-programs ("echo")
+   (to *standard-output*
+       (echo :arguments (list $HOSTNAME))))
+
+;; creates an environment variable FOO set to "val"
+(setf $FOO "val")
+
+;; outputs "val"
+(with-programs ("echo")
+   (to *standard-output*
+       (echo :arguments (list $FOO))))
 ```
 
-For more example usage, see `examples.lisp`
+For more example usage, see `example.lisp`
 
 ## License and Copyright
-Copyright 2018, Maxwell Taylor. Provided under the terms specified in the MIT license. 
+Copyright 2018, Maxwell Taylor. Provided under the terms specified in the MIT license.
