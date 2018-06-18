@@ -43,6 +43,8 @@ For more example usage, see `example.lisp`
 Common Lisp functions can arbitrarily be mixed with shell functions.
 To do this, one might try something like:
 ```lisp
+(in-package :clsh-user)
+
 (use-package :unix-streams)
 
 (defun my-outputter (&key stdin arguments)
