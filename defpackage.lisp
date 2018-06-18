@@ -37,15 +37,14 @@
            unix-fork
            with-programs))
 
-(defpackage :clsh-user
-  (:use :cl
-        :clsh-addons
-        :clexec
-        :osicat))
-  
-   
 (defpackage :clsh-addons
   (:use :cl
         :osicat
         :utils)
   (:export enable-var-reader))
+
+(defpackage :clsh-user
+  (:use :cl
+        :clsh-addons
+        :clexec
+        :osicat))
