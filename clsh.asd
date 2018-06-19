@@ -13,6 +13,7 @@
   :description "Provides the ability to run and compose UNIX programs"
   :serial t
   :depends-on ("cffi"
+               "named-readtables"
                "split-sequence"
                "trivial-gray-streams"
                "osicat")

@@ -1,6 +1,6 @@
 (in-package :clsh-user)
 
-(enable-var-reader)
+(in-readtable :clsh-syntax)
 
 ;; lists the contents of the directory and outputs to *standard-output*
 (with-programs ("ls")
@@ -23,3 +23,4 @@
 (with-programs ("echo")
   (to *standard-output*
       (echo :arguments (list $MY_ENV_VAR))))
+
