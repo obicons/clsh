@@ -39,6 +39,7 @@
 
 (defpackage :clsh-addons
   (:use :cl
+        :named-readtables
         :osicat
         :utils)
   (:export enable-var-reader))
@@ -47,4 +48,5 @@
   (:use :cl
         :clsh-addons
         :clexec
+        :named-readtables
         :osicat))

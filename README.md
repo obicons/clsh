@@ -10,7 +10,7 @@ Common Lisp is amazing, but unfortunately sometimes libraries are not present th
 ```lisp
 (in-package :clsh-user)
 
-(enable-var-reader)
+(in-readtable :clsh-syntax)
 
 ;; outputs "hello world"
 (with-programs ("echo")

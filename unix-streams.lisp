@@ -1,5 +1,7 @@
 (in-package :unix-streams)
 
+(defconstant +line-buffer-size+ 16)
+
 (defclass unix-stream () ())
 
 (defclass unix-output-stream (unix-stream
@@ -62,24 +64,24 @@
 (defun lisp-read-char (fd)
   (with-foreign-object (char :char)
     (let ((read-result (unix-read fd char 1)))
-      (if (zerop read-result)
-          :eof
-          (char (foreign-string-to-lisp char :count 1) 0)))))
+      (cond ((zerop read-result) :eof)
+            ((= read-result -1) (error "read error: ~a" *errno))
+            (t (char (foreign-string-to-lisp char :count 1) 0))))))
 
 (defmethod stream-read-char ((stream unix-input-stream))
   (lisp-read-char (unix-stream-file-descriptor stream)))
 
 (defmethod stream-read-line ((stream unix-input-stream))
-  (let ((char-buffer (make-array 0
+  (let ((char-buffer (make-array +line-buffer-size+
                                  :element-type 'character
                                  :adjustable t
                                  :fill-pointer 0)))
-    (loop for x = (read-char stream nil :eof)
+    (loop for x = (lisp-read-char (unix-stream-file-descriptor stream))
           if (eq x :eof)
             do (return (values (coerce char-buffer 'string) t))
           else if (eql x #\newline)
             do (return (values (coerce char-buffer 'string) nil))
-          else do (vector-push-extend x char-buffer))))
+          else do (vector-push-extend x char-buffer +line-buffer-size+))))
 
 (defmacro with-file-descriptor-as-istream ((stream-name fd) &rest body)
   `(let ((,stream-name (make-instance 'unix-input-stream
