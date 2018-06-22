@@ -2,7 +2,8 @@
   (:use :cffi
         :cl
         :trivial-gray-streams)
-  (:export make-unix-io-stream
+  (:export lisp-open
+           make-unix-io-stream
            unix-close
            unix-input-stream
            unix-output-stream
@@ -20,7 +21,8 @@
            string-list-to-array))
 
 (defpackage :clexec
-  (:use :cffi
+  (:use :bordeaux-threads
+        :cffi
         :cl
         :osicat
         :split-sequence
@@ -32,6 +34,7 @@
            make-dup-handle
            parentp
            pipe
+           pipe-lines-to-fn
            search-for-program
            to
            unix-fork

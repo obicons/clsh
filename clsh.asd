@@ -12,13 +12,24 @@
   :license "MIT"
   :description "Provides the ability to run and compose UNIX programs"
   :serial t
-  :depends-on ("cffi"
+  :depends-on ("bordeaux-threads"
+               "cffi"
                "named-readtables"
+               "osicat"
+               "prove"
                "split-sequence"
-               "trivial-gray-streams"
-               "osicat")
+               "trivial-gray-streams")
   :components ((:file "defpackage")
                (:file "utils")
                (:file "unix-streams")
                (:file "clexec")
-               (:file "clsh-addons")))
+               (:file "clsh-addons"))
+  :in-order-to ((test-op (test-op clsh-test))))
+
+(defsystem clsh-test
+  :depends-on ("clsh"
+               "prove")
+  :defsystem-depends-on (:prove-asdf)
+  :components ((:test-file "clsh-tests"))
+  :perform (test-op :after (op c)
+                    (funcall (intern #.(string :run) :prove) c)))
