@@ -47,3 +47,22 @@
          (is-error (lisp-open "clsh:test" nil) 'simple-error)
 
          (finalize))
+
+(subtest "Testing clexec"
+  (plan 5)
+
+  (is (childp 0) t
+      "a pid of 0 is a child's")
+
+  (is (childp 1) nil
+      "a pid not 0 is not a child's")
+
+  (is (parentp 0) nil
+      "a pid of 0 is not a parent's")
+
+  (is (parentp 1) t
+      "a pid of not 0 is a parent's")
+
+  ;; `echo` should be findable in $PATH
+  (isnt (search-for-program "echo") nil)
+  (finalize))
