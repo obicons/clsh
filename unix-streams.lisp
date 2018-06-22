@@ -4,6 +4,8 @@
 
 (defclass unix-stream () ())
 
+(defcvar "errno" :int)
+
 (defclass unix-output-stream (unix-stream
                               fundamental-character-output-stream)
   ((file-descriptor :initarg :file-descriptor

@@ -16,6 +16,7 @@
                "cffi"
                "named-readtables"
                "osicat"
+               "prove"
                "split-sequence"
                "trivial-gray-streams")
   :components ((:file "defpackage")
@@ -26,9 +27,9 @@
   :in-order-to ((test-op (test-op clsh-test))))
 
 (defsystem clsh-test
-  :depends-on (:clsh
-               :prove)
+  :depends-on ("clsh"
+               "prove")
   :defsystem-depends-on (:prove-asdf)
-  :components ((:test-file "clsh-test"))
+  :components ((:test-file "clsh-tests"))
   :perform (test-op :after (op c)
                     (funcall (intern #.(string :run) :prove) c)))

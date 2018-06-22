@@ -1,5 +1,7 @@
 (in-package :clsh-tests)
 
+(plan 8)
+
 (defparameter *file-fd* (lisp-open "clsh:test" '(:create :output)))
 
 (ok (and (integerp *file-fd*) (not (zerop *file-fd*)))
@@ -14,7 +16,7 @@
 (is (unix-close *file-fd*) 0
     "`unix-close` call looks normal")
 
-(setf *file-fd* (lisp-open "test" '(:input)))
+(setf *file-fd* (lisp-open "clsh:test" '(:input)))
 
 (ok (and (integerp *file-fd*) (not (zerop *file-fd*)))
     "File opened with input mode")
@@ -32,3 +34,5 @@
 (delete-file "clsh:test")
 
 (is-error (lisp-open "clsh:test" nil) 'simple-error)
+
+(finalize)
