@@ -23,4 +23,3 @@
 (with-programs ("echo")
   (to *standard-output*
       (echo :arguments (list $MY_ENV_VAR))))
-

@@ -139,24 +139,45 @@
         (when close-on-eof
           (unix-close (unix-stream-file-descriptor source-stream)))))
 
+(defun pipe-lines-to-fn (&key stdin arguments)
+  "Returns a unix-input-stream. Each line read from stdin
+   is supplied to the car of arguments and the resulting value made 
+   available in the input-stream.
+   (car arguments) is executed in a separate thread."
+  (when (null stdin)
+    (error "missing stdin argument at pipe-lines-to-fn"))
+  (when (null arguments)
+    (error "missing function argument at pipe-lines-to-fn"))
+  (multiple-value-bind (read-end write-end) (lisp-pipe)
+    (let ((istream (make-instance 'unix-input-stream :file-descriptor read-end))
+          (ostream (make-instance 'unix-output-stream :file-descriptor write-end))
+          (lisp-handler (car arguments)))
+      (make-thread
+       #'(lambda ()
+           (loop for x = (read-line stdin nil)
+                 while x
+                 do (format ostream "~a~%" (funcall lisp-handler x)))))
+      istream)))
+
 (defmacro pipe-helper (previous-form-result &rest forms)
   (cond ((null forms) previous-form-result)
         ((consp (car forms))
-         `(pipe-helper ,(append (list (caar forms)
-                                      :arguments (list 'quote (cdar forms)))
-                                (list :stdin previous-form-result))
-                       ,@(cdr forms)))
+         `(pipe-helper
+           ,(append (list (caar forms) :arguments `(list ,@(cdar forms)))
+                    (list :stdin previous-form-result))
+           ,@(cdr forms)))
         ((atom (car forms))
-         `(pipe-helper ,(append (list (car forms))
-                                (list :stdin previous-form-result))
-                       ,@(cdr forms)))))
+         `(pipe-helper
+           ,(append (list (car forms)) (list :stdin previous-form-result))
+           ,@(cdr forms)))))
 
 (defmacro pipe (&rest forms)
   "Pipes stdout of the first form to stdin of the next form.
    The first form can be either an atom or a function-call."
   (cond ((consp (car forms))
          `(pipe-helper ,(list (caar forms)
-                              :arguments (list 'quote (cdar forms)))
+                              :arguments
+                              `(list ,@(cdar forms)))
                        ,@(cdr forms)))
         ((atom (car forms))
          `(pipe-helper ,(list (car forms)) ,@(cdr forms)))))

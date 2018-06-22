@@ -65,7 +65,7 @@
   (with-foreign-object (char :char)
     (let ((read-result (unix-read fd char 1)))
       (cond ((zerop read-result) :eof)
-            ((= read-result -1) (error "read error: ~a" *errno))
+            ((= read-result -1) (error "read error: ~a" *errno*))
             (t (char (foreign-string-to-lisp char :count 1) 0))))))
 
 (defmethod stream-read-char ((stream unix-input-stream))
@@ -93,20 +93,31 @@
 (defconstant +read-only+ 0)
 (defconstant +write-only+ 1)
 (defconstant +read-write+ 2)
+(defconstant +append+ 2000)
+(defconstant +create+ 100)    
 
 (defcfun ("open" unix-open) :int
   "Opens pathname with flags"
   (pathname :string)
   (flags :int))
 
+(defun parse-lisp-flags (flag-list)
+  (logior
+   ;; read or write access
+   (or (and (member :input flag-list)
+            (member :output flag-list)
+            +read-write+)
+       (and (member :output flag-list) +write-only+)
+       +read-only+)
+   (or (and (member :create flag-list) +create+) 0)
+   (or (and (member :append flag-list) +append+) 0)))
+
 (defun lisp-open (path flags)
-  (let ((fd (unix-open path flags)))
+  "opens path for reading. flags are a list of file open flags,
+   containing possibly :input, :output, :append, :create."
+  (let ((fd (unix-open path (parse-lisp-flags flags))))
     (if (< fd 0)
         (error "Error opening ~S" path) fd)))
-
-(defcfun ("close" unix-close) :int
-  "closes fd"
-  (fd :int))
 
 (defmacro with-open-fd ((name path mode) &rest body)
   (let ((body-result-var (gensym "body-result")))
@@ -116,6 +127,10 @@
        ,body-result-var)))
 
 ;;; END TEST SUPPORT SECTION
+
+(defcfun ("close" unix-close) :int
+  "closes fd"
+  (fd :int))
 
 (defun make-unix-io-stream (input-fd output-fd)
   (make-two-way-stream
