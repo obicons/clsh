@@ -6,6 +6,10 @@
 
 (in-package :clsh-tests)
 
+(defparameter *file-fd* nil)
+(defparameter *file-output-stream* nil)
+(defparameter *file-input-stream* nil)
+
 (subtest "Testing unix-streams"
          (plan 8)
 
