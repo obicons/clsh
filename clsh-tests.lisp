@@ -11,7 +11,7 @@
 (defparameter *file-input-stream* nil)
 
 (subtest "Testing unix-streams"
-         (plan 8)
+         (plan 9)
 
          (setf *file-fd* (lisp-open "clsh:test" '(:create :output)))
 
@@ -22,10 +22,14 @@
            (make-instance 'unix-output-stream :file-descriptor *file-fd*))
 
          (is (format *file-output-stream* "hello world~%") nil
-             "`format` call looks normal")
+             "`format` succeeds on existing file")
 
          (is (unix-close *file-fd*) 0
-             "`unix-close` call looks normal")
+             "`unix-close` call works on open file descriptor")
+
+         (is-error (format *file-output-stream* "hello again~%")
+                   'unix-stream-error
+                   "`format` call fails on closed file descriptor")
 
          (setf *file-fd* (lisp-open "clsh:test" '(:input)))
 

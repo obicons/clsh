@@ -4,6 +4,9 @@
 
 (defclass unix-stream () ())
 
+(define-condition unix-stream-error (error)
+  ((errno :initarg :errno :reader unix-stream-error-number)))
+
 (defcvar "errno" :int)
 
 (defclass unix-output-stream (unix-stream
@@ -28,7 +31,8 @@
 
 (defun lisp-write-string (fd str)
   (with-foreign-string (c-str str)
-    (unix-write fd c-str (length str))))
+    (when (< (unix-write fd c-str (length str)) 0)
+      (error 'unix-stream-error :errno *errno*))))
 
 (defmethod stream-write-char ((stream unix-output-stream) char)
   (lisp-write-string (unix-stream-file-descriptor stream) (string char)))
@@ -67,7 +71,8 @@
   (with-foreign-object (char :char)
     (let ((read-result (unix-read fd char 1)))
       (cond ((zerop read-result) :eof)
-            ((= read-result -1) (error "read error: ~a" *errno*))
+            ((= read-result -1)
+             (error 'unix-stream-error :errno *errno*))
             (t (char (foreign-string-to-lisp char :count 1) 0))))))
 
 (defmethod stream-read-char ((stream unix-input-stream))

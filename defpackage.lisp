@@ -7,6 +7,7 @@
            unix-close
            unix-input-stream
            unix-output-stream
+           unix-stream-error
            unix-stream-file-descriptor
            with-file-descriptor-as-ostream))
 
