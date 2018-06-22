@@ -53,9 +53,3 @@
         :clexec
         :named-readtables
         :osicat))
-
-(defpackage :clsh-tests
-  (:use :cl
-        :clexec
-        :prove
-        :unix-streams))
